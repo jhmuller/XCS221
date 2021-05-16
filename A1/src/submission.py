@@ -21,13 +21,23 @@ def extractWordFeatures(x):
     @return dict: feature vector representation of x.
     Example: "I am what I am" --> {'I': 2, 'am': 2, 'what': 1}
     """
-    pass
+
     # ### START CODE HERE ###
+    verbosity = 0
+
+    def whoami(i=1):
+        return sys._getframe(i).f_code.co_name
+
     from collections import defaultdict
+    argdict = locals().copy()
+    if verbosity > 0:
+        print(whoami(2))
+
     parts = x.split()
     res = defaultdict(lambda: 0)
     for p in parts:
         res[p] += 1
+    # print("input: {0}, output: {1}".format(x, res))
     return res
 
     # ### END CODE HERE ###
@@ -50,9 +60,92 @@ def learnPredictor(trainExamples, testExamples, featureExtractor, numIters, eta)
     '''
     weights = {}  # feature => weight
     # ### START CODE HERE ###
-    xs = [e[0] for e in trainExamples]
-    phi = featureExtractor(xs)
-    for x, y in trainExamples:
+    verbosity = 0
+
+    def whoami(i=1):
+        return sys._getframe(i).f_code.co_name
+
+    if verbosity > 0:
+        argdict = locals().copy()
+        print(whoami())
+        if verbosity > 1:
+            print("  Args")
+            for k in argdict.keys():
+                print("  {0}: {1}".format(k, argdict[k]))
+
+    allxs = [e[0] for e in trainExamples]
+    allxString = " ".join(allxs)
+    phi = featureExtractor(allxString)
+    if not isinstance(phi, dict):
+        raise ValueError("phi is not a dict but a {0}".format(type(phi)))
+
+    weights = dict.fromkeys(phi.keys(), 0.0)
+    if verbosity > 0:
+        print("weights: {0}".format(weights))
+
+    def dictdot(xdict, ydict):
+        argdict = locals().copy()
+        if verbosity > 2:
+            print(whoami())
+            if verbosity > 1:
+                print("--Args")
+                for k in argdict.keys():
+                    print("  {0}: {1}".format(k, argdict[k]))
+        res = 0
+        for k in xdict.keys():
+            res += xdict[k] * ydict[k]
+        if verbosity > 0:
+            print(" res: {0}".format(res))
+        return res
+
+    # For stochastic gradient descent
+    def sFtrain(w, i):
+        argdict = locals().copy()
+        if verbosity > 2:
+            print(whoami())
+            if verbosity > 1:
+                print("  Args")
+                for k in argdict.keys():
+                    print("  {0}: {1}".format(k, argdict[k]))
+        x, y = trainExamples[i]
+        phi = featureExtractor(x)
+        res = (dictdot(w, phi) - y) ** 2
+        return res
+
+    def sdFtrain(w, i):
+        argdict = locals().copy()
+        if verbosity > 0:
+            print(whoami())
+            if verbosity > 1:
+                print("  Args")
+                for k in argdict.keys():
+                    print("  {0}: {1}".format(k, argdict[k]))
+        x, y = trainExamples[i]
+        phi = featureExtractor(x)
+        mult = 2 * (dictdot(w, phi) - y)
+
+        res = phi.copy()
+        for k in res.keys():
+            res[k] *= mult
+        if verbosity > 1:
+            print("  res: {0}".format(res))
+        return res
+
+    numUpdates = 0
+    for ni in range(numIters):
+        for ti in range(len(trainExamples)):
+            x, y = trainExamples[ti]
+            if verbosity > 1:
+                print("iter: {0}, ti: {1}, x: {2}, y: {3}".format(ni, ti, x, y))
+            #value = sFtrain(weights, i)
+            gradient = sdFtrain(weights, ti)
+            numUpdates += 1
+            eta = 1.0 / numUpdates  # Remember to do 1.0 instead of 1!
+            for k in weights.keys():
+                weights[k] = weights[k] - eta * gradient[k]
+        if verbosity > 0:
+            print('iteration {}: w = {}'.format(ni, weights))
+
 
 
     # ### END CODE HERE ###
@@ -72,13 +165,19 @@ def generateDataset(numExamples, weights):
     # and values can be anything (randomize!) with a nonzero score under the given weight vector.
     # y should be 1 or -1 as classified by the weight vector.
     def generateExample():
-        phi = None
-        y = None
+
         # ### START CODE HERE ###
+        def dictdot(xdict, ydict):
+            res = 0
+            for k in xdict.keys():
+                res += xdict[k] * ydict[k]
+            return res
+
+        phi = dict.fromkeys(weights, 0.0)
         for k in weights.keys():
-            v = weights[k]
             phi[k] = random.uniform(-1, 1)
-            y = int(phi[k] > 0)
+        dot = dictdot(weights, phi)
+        y = int(dot > 0)
         # ### END CODE HERE ###
         return (phi, y)
     return [generateExample() for _ in range(numExamples)]
