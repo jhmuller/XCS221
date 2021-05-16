@@ -23,11 +23,16 @@ def extractWordFeatures(x):
     """
 
     # ### START CODE HERE ###
+    import datetime
     verbosity = 0
 
     def whoami(i=1):
         return sys._getframe(i).f_code.co_name
 
+    parent = whoami(2)
+    if parent == "test_2":
+        print("called from {0}, <{1}>".format(parent, datetime.datetime.now()))
+        verbosity = 1
     from collections import defaultdict
     argdict = locals().copy()
     if verbosity > 0:
@@ -60,10 +65,16 @@ def learnPredictor(trainExamples, testExamples, featureExtractor, numIters, eta)
     '''
     weights = {}  # feature => weight
     # ### START CODE HERE ###
+    import datetime
     verbosity = 0
 
     def whoami(i=1):
         return sys._getframe(i).f_code.co_name
+
+    parent = whoami(2)
+    if parent == "test_2":
+        print("called from {0}, <{1}>".format(parent, datetime.datetime.now()))
+        verbosity = 1
 
     if verbosity > 0:
         argdict = locals().copy()
@@ -80,7 +91,7 @@ def learnPredictor(trainExamples, testExamples, featureExtractor, numIters, eta)
         raise ValueError("phi is not a dict but a {0}".format(type(phi)))
 
     weights = dict.fromkeys(phi.keys(), 0.0)
-    if verbosity > 0:
+    if verbosity > 1:
         print("weights: {0}".format(weights))
 
     def dictdot(xdict, ydict):
@@ -94,7 +105,7 @@ def learnPredictor(trainExamples, testExamples, featureExtractor, numIters, eta)
         res = 0
         for k in xdict.keys():
             res += xdict[k] * ydict[k]
-        if verbosity > 0:
+        if verbosity > 2:
             print(" res: {0}".format(res))
         return res
 
@@ -114,7 +125,7 @@ def learnPredictor(trainExamples, testExamples, featureExtractor, numIters, eta)
 
     def sdFtrain(w, i):
         argdict = locals().copy()
-        if verbosity > 0:
+        if verbosity > 1:
             print(whoami())
             if verbosity > 1:
                 print("  Args")
@@ -128,15 +139,16 @@ def learnPredictor(trainExamples, testExamples, featureExtractor, numIters, eta)
         for k in res.keys():
             res[k] *= mult
         if verbosity > 1:
-            print("  res: {0}".format(res))
+            print("  {0} res: {0}".format(whoami(), res))
         return res
 
     numUpdates = 0
     for ni in range(numIters):
         for ti in range(len(trainExamples)):
             x, y = trainExamples[ti]
-            if verbosity > 1:
-                print("iter: {0}, ti: {1}, x: {2}, y: {3}".format(ni, ti, x, y))
+            if verbosity > 0:
+                if ti % 10000 == 0:
+                    print("iter: {0}, ti: {1}, len(x): {2} y: {3} <{4}>".format(ni, ti, len(x), y, datetime.datetime.now()))
             #value = sFtrain(weights, i)
             gradient = sdFtrain(weights, ti)
             numUpdates += 1
