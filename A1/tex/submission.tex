@@ -33,6 +33,42 @@ instructions to regenerate this handout with your typeset \LaTeX{} solutions.
 % <SCPD_SUBMISSION_TAG>_1d
 \begin{answer}
   % ### START CODE HERE ###
+  Example 1:
+=== a perfectly competent and often imaginative film that lacks what little lilo \& stitch had in spades -- charisma .
+Truth: 1, Prediction: -1 [WRONG]
+
+Note the word "lack" was in the text with very negative weights, but in this case I think the "lacks" refers to a different movie
+
+
+Example 2:
+=== 'it's painful to watch witherspoon's talents wasting away inside unnecessary films like legally blonde and sweet home abomination , i mean , alabama . '
+Truth: -1, Prediction: 1 [WRONG]
+
+
+Here the words "sweet" and "home" provided very positive weights but they were just the names of another movie
+
+
+Example 3:
+=== wickedly funny , visually engrossing , never boring , this movie challenges us to think about the ways we consume pop culture .
+Truth: 1, Prediction: -1 [WRONG]
+
+Here "never" and "boring" gave strong negative values, but note they were used together to mean a positive sentiment.
+
+
+Example 4:
+=== even a hardened voyeur would require the patience of job to get through this interminable , shapeless documentary about the swinging subculture .
+Truth: -1, Prediction: 1 [WRONG]
+
+Both "patience" and "shapeless" had positive weights.  Maybe not so strange for "patience" but wrong for how it is used.
+Hard to see why "shapeless" has a positive weight
+
+Example 5:
+=== wedding feels a bit anachronistic . still , not every low-budget movie must be quirky or bleak , and a happy ending is no cinematic sin .
+Truth: 1, Prediction: -1 [WRONG]
+
+Odd, but two of the most negative weights here were "feel" and "ending"
+
+  
   % ### END CODE HERE ###
 \end{answer}
 % <SCPD_SUBMISSION_TAG>_1d

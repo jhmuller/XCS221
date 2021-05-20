@@ -140,18 +140,6 @@ def learnPredictor(trainExamples, testExamples, featureExtractor, numIters, eta)
             losses[k] = float(losses[k]) / N
         return losses
 
-    def count_positive(ddict):
-        res = sum([int(v > 0) for k, v in ddict.items()])
-        return res
-
-    def count_negative(ddict):
-        res = sum([int(v < 0) for k, v in ddict.items()])
-        return res
-
-    def count_nonzero(ddict):
-        res = sum(is_nonzero(v) for k, v in ddict.items())
-        return res
-
     def hinge_loss_gradient(weights, i):
         x, y = trainExamples[i]
         phi = featureExtractor(x)
@@ -201,8 +189,8 @@ def learnPredictor(trainExamples, testExamples, featureExtractor, numIters, eta)
             increment(d1=weights, scale=-eta, d2=gradient)
 
         if ei % 2 == 0:
-            print("End epoch: {0}".format(ei))
             if verbosity > 0:
+                print("End epoch: {0}".format(ei))
                 dtend = datetime.datetime.now()
                 dur = (dtend - dtstart).total_seconds()
                 print("end <{0}> total_seconds: {1}".format(dtend, dur))
@@ -295,21 +283,24 @@ def assertLess(x, y):
     assert x < y
 
 
-def test_1b_1_basic():
+def question_f():
     """1b-2-basic:  Test classifier on real polarity dev dataset."""
     trainExamples = readExamples('polarity.train')
     devExamples = readExamples('polarity.dev')
-    featureExtractor = extractWordFeatures
-    weights = learnPredictor(trainExamples, devExamples, featureExtractor, numIters=20, eta=0.01)
-    outputWeights(weights, 'weights')
-    outputErrorAnalysis(devExamples, featureExtractor, weights, 'error-analysis')  # Use this to debug
-    trainError = evaluatePredictor(trainExamples,
-                                   lambda x: (1 if dotProduct(featureExtractor(x), weights) >= 0 else -1))
-    devError = evaluatePredictor(devExamples,
-                                 lambda x: (1 if dotProduct(featureExtractor(x), weights) >= 0 else -1))
-    print(("Official: train error = %s, dev error = %s" % (trainError, devError)))
-    assertGreater(0.04, trainError)
-    assertGreater(0.30, devError)
+    for n in range(2, 12):
+        print("==n: {0}".format(n))
+        #featureExtractor = extractWordFeatures
+        featureExtractor = extractCharacterFeatures(n)
+        weights = learnPredictor(trainExamples, devExamples, featureExtractor, numIters=20, eta=0.01)
+        outputWeights(weights, 'weights')
+        outputErrorAnalysis(devExamples, featureExtractor, weights, 'error-analysis')  # Use this to debug
+        trainError = evaluatePredictor(trainExamples,
+                                       lambda x: (1 if dotProduct(featureExtractor(x), weights) >= 0 else -1))
+        devError = evaluatePredictor(devExamples,
+                                     lambda x: (1 if dotProduct(featureExtractor(x), weights) >= 0 else -1))
+        print(("  Official: train error = %s, dev error = %s" % (trainError, devError)))
+    #assertGreater(0.04, trainError)
+    #assertGreater(0.30, devError)
 
 
 if __name__ == "__main__":
@@ -320,7 +311,7 @@ if __name__ == "__main__":
 
     if not debug:
         import cProfile
-        cProfile.run('test_1b_1_basic()', 'submission.prof')
+        cProfile.run('question_f()', 'submission.prof')
 
     if False:
         trainExamples = (("hi bye", 1), ("hi hi", -1))
