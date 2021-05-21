@@ -81,6 +81,15 @@ Odd, but two of the most negative weights here were "feel" and "ending"
 % <SCPD_SUBMISSION_TAG>_1f
 \begin{answer}
   % ### START CODE HERE ###
+  I tried \emph{n} ranging from 2 to 11.  The training error dropped to around 0 at 4 then crept up but only slightly around 6 or 7.  The test error dropped to around 0.27 for n = 4, 5, 6 but then went back up to around 0.33.
+  
+I guess the n-grams can capture parts of words that might be re-used and hence important.  I suppose trying to do some sophisticated breaking of words into parts might work too, but using n-grams is simple so maybe preferable.
+
+Another thought on how the n-grams might have an edge is that they can capture some context, depending on \emph{n}. For example, you might recognize "notbad" from the separate words "not" and "bad"
+
+Following along that theme, a review that might be classified correctly by the n-gram method coule be
+  " the movie was not terrible, not boring and not dull"
+
   % ### END CODE HERE ###
 \end{answer}
 % <SCPD_SUBMISSION_TAG>_1f
