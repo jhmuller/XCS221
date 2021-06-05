@@ -2,12 +2,7 @@ import shell
 import util
 import wordsegUtil
 
-def func_name(i=1):
-    import sys
-    return sys._getframe(i).f_code.co_name
 
-verbosity = 1
-verbose = 1
 ############################################################
 # Problem 1b: Solve the segmentation problem under a unigram model
 
@@ -19,51 +14,38 @@ class SegmentationProblem(util.SearchProblem):
     def startState(self):
         # ### START CODE HERE ###
 
-        if False:
-            state = (self.query,)
-            self.init_cost = sum([self.unigramCost(part) for part in state])
-            self.end_state = "$" + self.query + '$'
-            self.best_end = 10**8
-        else:
-            state = ((), self.query)
-            self.init_cost = self.unigramCost(self.query)
+        self.verbosity = 0
 
-        if self.query.startswith("zzzz"):
-            print("Here")
-        if verbosity > 0:
+        state = 0 # , self.query)
+        self.init_cost = self.unigramCost(self.query)
+
+        if self.verbosity > 0:
             cost = sum([self.unigramCost(part) for part in state])
             print("--Start--")
-            print("Func: '{0}' state= {1}, cost: {2}".format(func_name(), state, self.init_cost), )
-            self.best_cost = cost
+            print("Func: '{0}' state= {1}, cost: {2}".format("startState",
+                                                             state, self.init_cost), )
+            self.end_state = len(self.query)
         return state
         # ### END CODE HERE ###
 
     def isEnd(self, state):
         # ### START CODE HERE ###
-        if False:
-            if state[0] == self.end_state:
-                return True
-            else:
-                return False
+        if state == self.end_state:
+            return True
         else:
-            if len(state[1]) == 0:
-                return True
-            else:
-                return False
-
+            return False
 
         # ### END CODE HERE ###
 
     def succAndCost(self, state):
         # ### START CODE HERE ###
 
-        if verbosity > 1:
+        if self.verbosity > 1:
             cost = sum([self.unigramCost(word) for word in state])
-            print("Func: '{0}' state= {1}, cost: {2}".format(func_name(), state, cost),)
-
-
+            print("-->'{0}' state= {1}".format("succAndCost", state),)
 
         def segment_successors(state, uni_cost_func):
+
             done_part = list(state[0])
 
             next_part = state[1]
@@ -118,13 +100,15 @@ def segmentWords(query, unigramCost):
     if len(query) == 0:
         return ''
 
-    if query.startswith("zzzzz"):
-        print(query)
-    ucs = util.UniformCostSearch(verbose=verbose)
+
+    ucs = util.UniformCostSearch(verbose=0)
     ucs.solve(SegmentationProblem(query, unigramCost))
 
     # ### START CODE HERE ###
-    if verbosity > 0:
+    if len(query) > 25:
+        return query
+
+    if False:
         print("totalCost: {0}".format(ucs.totalCost))
         print("actions: {0}".format(ucs.actions))
         print("numStatesExplored: {0}".format(ucs.numStatesExplored))
@@ -151,7 +135,7 @@ def segmentWords(query, unigramCost):
 
     left_words, right_word = state
     res = ' '.join(left_words)
-    if verbosity > 0:
+    if False:
         print(" res: '{0}'".format(res))
         print("--End--\n")
     return res
@@ -169,25 +153,20 @@ class VowelInsertionProblem(util.SearchProblem):
     def startState(self):
         # ### START CODE HERE ###
         state = (self.queryWords,)
+        self.verbosity = 0.5
+        self.end = len(self.queryWords) - 1
 
-        self.end_state = ("--END-State--",)
-
-        if verbosity > 0:
-            print("--Start--")
-            pairs = zip(self.queryWords, self.queryWords[1:])
-            cost = sum([self.bigramCost(a, b) for a, b in pairs])
-            if len(self.queryWords) > 0:
-                cost += self.bigramCost(wordsegUtil.SENTENCE_BEGIN, self.queryWords[0])
-            print("Func: '{0}' state= {1}, cost: {2}".format(func_name(), state, cost,),)
-
+        state = (-1, wordsegUtil.SENTENCE_BEGIN)
+        if self.verbosity > 0:
+            print("\n--Start--")
+            print(" -->{0} queryWords {1}".format("start", self.queryWords),)
         return state
         # ### END CODE HERE ###
 
     def isEnd(self, state):
         # ### START CODE HERE ###
 
-        next_states = self.succAndCost(state)
-        if len(next_states) == 0:
+        if state[0] == self.end:
             return True
         else:
             return False
@@ -195,38 +174,50 @@ class VowelInsertionProblem(util.SearchProblem):
 
     def succAndCost(self, state):
         # ### START CODE HERE ###
+        if self.verbosity > 1:
+            print(" ->{0} state= {1}, ".format("succCost", state, ), )
 
-        def apply_bigram_cost(words):
-            cost = 0
-            if len(words) > 0:
-                cost += self.bigramCost(wordsegUtil.SENTENCE_BEGIN, words[0])
-            pairs = zip(words, words[1:])
-            cost += sum([self.bigramCost(a, b) for a, b in pairs])
-            return cost
+        def replace_successors(state, bigramCost):
+            if self.verbosity > 1:
+                print("  -->{0} state= {1}, ".format("replace", state,),)
 
-        def replace_successors(state, apply_bigram_cost):
-            cur_words = list(state)
-            cur_cost = apply_bigram_cost(cur_words)
-            if verbosity > 1:
-                print("Func: '{0}' state= {1}, cur_cost: {2}".format(func_name(), state, cur_cost),)
+            wi, last_word = state
+            if self.verbosity > 1:
+                print(" queryWords {0}, wi {1}".format(self.queryWords, wi))
+            try:
+                next_frag = self.queryWords[wi+1]
+            except Exception as e:
+                import pdb
+                pdb.set_trace()
+            try:
+                replace_words = self.possibleFills(next_frag)
+            except Exception as e:
+                pass
+                replace_words = []
+
             succ_states = []
-            for wi, old_word in enumerate(cur_words):
-                try:
-                    replace_words = self.possibleFills(old_word)
-                except Exception as e:
-                    pass
-                    replace_words = []
-                for replace_word in replace_words:
-                    new_words = cur_words.copy()
-                    action = (wi, (old_word, replace_word),)
-                    new_words[wi] = replace_word
+            # no replace
+            next_cost = bigramCost(last_word, next_frag)
+            action = (wi+1,(next_frag, next_frag))
+            succ_states.append((action, (wi + 1, next_frag), next_cost))
 
-                    replace_cost = apply_bigram_cost(new_words)
-                    cost_change = replace_cost - cur_cost
+            # using the fills
+            try:
+                replace_words = self.possibleFills(next_frag)
+            except Exception as e:
+                print("Exception calling possible fills with {0}".format(next_frag))
+                print(e)
+                replace_words = []
 
+            for next_word in replace_words:
+                next_cost = bigramCost(last_word, next_word)
+                action = (wi+1, (next_frag, next_word),)
+                succ_states.append((action, (wi+1, next_word), next_cost))
             return succ_states
 
-        succ_states = replace_successors(state=state, apply_bigram_cost=apply_bigram_cost)
+        succ_states = replace_successors(state, self.bigramCost)
+        if self.verbosity > 1:
+            print("   next_states {0}, ".format(succ_states))
         return succ_states
 
         # ### END CODE HERE ###
@@ -234,13 +225,16 @@ class VowelInsertionProblem(util.SearchProblem):
 
 def insertVowels(queryWords, bigramCost, possibleFills):
     # ### START CODE HERE ###
-    ucs = util.UniformCostSearch(verbose=verbose)
+    ucs = util.UniformCostSearch(verbose=0)
     ucs.solve(VowelInsertionProblem(queryWords, bigramCost, possibleFills))
 
     words = queryWords
 
     if ucs.actions is None or len(ucs.actions) == 0:
         return ' '.join(queryWords)
+
+    if True:
+        print("Done: {0} actions".format(len(ucs.actions)))
 
     for wi, (old_word, new_word) in ucs.actions:
         if words[wi] != old_word:
@@ -249,7 +243,7 @@ def insertVowels(queryWords, bigramCost, possibleFills):
             raise ValueError(msg)
         words[wi] = new_word
     res = ' '.join(words)
-    if verbosity > 0:
+    if True:
         print("**res: {0}, cost: {1}".format(res, ucs.totalCost))
         print("")
     return res
@@ -267,6 +261,7 @@ class JointSegmentationInsertionProblem(util.SearchProblem):
     def startState(self):
         # ### START CODE HERE ###
         state = (self.query,)
+        self.verbosity = 0
         self.end_state = ("$END-State$",)
 
         def apply_bigram_cost(words):
@@ -279,9 +274,9 @@ class JointSegmentationInsertionProblem(util.SearchProblem):
 
         self.init_cost = apply_bigram_cost(self.query)
         self.best_end = self.init_cost
-        if verbosity > 0:
+        if self.verbosity > 0:
             print("\n\n--Start 3--")
-            print(" -->>{0} state= {1} init_cost: {2}  best_end: {3}".format(func_name(),
+            print(" -->>{0} state= {1} init_cost: {2}  best_end: {3}".format("start",
                                                                              state,
                                                                              self.init_cost,
                                                                              self.best_end),)
@@ -292,8 +287,8 @@ class JointSegmentationInsertionProblem(util.SearchProblem):
     def isEnd(self, state):
         # ### START CODE HERE ###
         if state[0] == self.end_state:
-            if verbosity > 0:
-                print("  -->> {0} end-state= {1}".format(func_name(), state,), )
+            if self.verbosity > 0:
+                print("  -->> {0} end-state= {1}".format("isEnd", state,), )
             res = True
         else:
             res = False
@@ -305,8 +300,8 @@ class JointSegmentationInsertionProblem(util.SearchProblem):
         # ### START CODE HERE ###
         words = state
 
-        if verbosity > 1:
-            print("\n-->> '{0}' state= {1}, words: {2} ".format(func_name(1), state, words))
+        if self.verbosity > 1:
+            print("\n-->> '{0}' state= {1}, words: {2} ".format("succAndCost", state, words))
         cur_words = list(words)
         real_words = cur_words.copy()
         for i in range(len(cur_words)):
@@ -328,8 +323,8 @@ class JointSegmentationInsertionProblem(util.SearchProblem):
 
         def segment_successors(words, apply_bigram_cost):
             cur_cost = apply_bigram_cost(words)
-            if verbosity > 1:
-                print("   -> {0} state= {1}, cur_cost: {2}".format(func_name(), state, cur_cost),)
+            if self.verbosity > 1:
+                print("   -> {0} state= {1}, cur_cost: {2}".format("segSucc", state, cur_cost),)
             succ_states = []
             for wi in range(len(words)):
                 word = words[wi]
@@ -351,8 +346,8 @@ class JointSegmentationInsertionProblem(util.SearchProblem):
         def replace_successors(words, apply_bigram_cost):
             cur_words = list(state)
             cur_cost = apply_bigram_cost(cur_words)
-            if verbosity > 1:
-                print("   -> {0} state= {1}, cur_cost: {2}".format(func_name(), state, cur_cost),)
+            if self.verbosity > 1:
+                print("   -> {0} state= {1}, cur_cost: {2}".format("replace", state, cur_cost),)
             succ_states = []
             for wi, old_word in enumerate(cur_words):
                 if old_word[0] == "$":
@@ -372,28 +367,24 @@ class JointSegmentationInsertionProblem(util.SearchProblem):
                         action = ("R", wi, (old_word, replace_word),)
                         new_state = (action, tuple(new_words,), 0)
                         succ_states.append(new_state)
-            if verbosity > 1:
+            if self.verbosity > 1:
                 print("  succ_states: [{0}]".format(succ_states),)
             return succ_states
 
         segment_states = segment_successors(cur_words, apply_bigram_cost)
         replace_states = replace_successors(cur_words, apply_bigram_cost)
-        if False:
-            for action, state, cost in segment_states:
-                rstates = replace_successors(state, apply_bigram_cost)
-                replace_states += rstates
 
         next_states = replace_states + segment_states
 
         if cur_words[0] != self.query and cur_words[0] != self.end_state:
             if state_cost < self.best_end:
                 self.best_end = state_cost
-                if verbosity > 0:
+                if self.verbosity > 0:
                     print("** adding link to end state from {0} with cost {1} cur_words {2}".format(state, state_cost, cur_words),)
                 next_states.append(( ('N', 0, 0), self.end_state, state_cost,))
 
 
-        if verbosity > 0.9:
+        if self.verbosity > 0.9:
             print("next_states: ")
             for i, ns in enumerate(next_states):
                 print("{0}: {1}".format(i, ns))
@@ -407,17 +398,15 @@ def segmentAndInsert(query, bigramCost, possibleFills):
         return ''
 
     # ### START CODE HERE ###
-    ucs = util.UniformCostSearch(verbose=verbose)
+    ucs = util.UniformCostSearch(verbose=0)
     ucs.solve(JointSegmentationInsertionProblem(query, bigramCost, possibleFills))
-
-
     words = [query,]
     pairs = zip(words, words[1:])
     init_cost = sum([bigramCost(a, b) for a, b in pairs])
     if len(words) > 0:
         init_cost += bigramCost(wordsegUtil.SENTENCE_BEGIN, words[0])
-    if verbosity > 0:
-        print("Func: '{0}' query= {1}, init_cost: {2}".format(func_name(), query, init_cost),)
+    if False:
+        print("Func: '{0}' query= {1}, init_cost: {2}".format("segmentAndInsert", query, init_cost),)
         print(" DONE: totalCost: {0}, actions: {1}".format(ucs.totalCost, ucs.actions))
         print("  NumStatesExplored: {0}".format(ucs.numStatesExplored,))
 
@@ -431,7 +420,7 @@ def segmentAndInsert(query, bigramCost, possibleFills):
         return query
 
     for ai, (atype, wi, ainfo) in enumerate(ucs.actions):
-        if verbosity > 0:
+        if True:
             print("ai: {0}, atype: {1}, wi: {2}, ainfo: {3}".format(ai, atype, wi, ainfo))
         if atype == 'R':
             old_word, new_word = ainfo
@@ -449,7 +438,7 @@ def segmentAndInsert(query, bigramCost, possibleFills):
         else:
             raise RuntimeError("unexpected atype: {0}, expected 'N', 'R' or 'S'")
     res = ' '.join(words)
-    if verbosity > 0:
+    if True > 0:
         print(" **answer: {0}, joined: {1}".format(words, res))
         print("**res: {0}, cost: {1}".format(res, ucs.totalCost))
         print("")
