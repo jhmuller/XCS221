@@ -49,9 +49,11 @@ class UniformCostSearch(SearchAlgorithm):
             # Remove the state from the queue with the lowest pastCost
             # (priority).
             state, pastCost = frontier.removeMin()
-            if state == None: break
+            # print(" min state: {0}, pastCost: {1}".format(state, pastCost))
+            if state == None:
+                break
             self.numStatesExplored += 1
-            if self.verbose >= 2:
+            if self.verbose >= 1:
                 print(("Exploring %s with pastCost %s" % (state, pastCost)))
 
             # Check if we've reached an end state; if so, extract solution.
@@ -72,10 +74,14 @@ class UniformCostSearch(SearchAlgorithm):
             # Expand from |state| to new successor states,
             # updating the frontier with each newState.
             for action, newState, cost in problem.succAndCost(state):
-                if self.verbose >= 3:
+                if self.verbose > 0:
                     print(("  Action %s => %s with cost %s + %s" % (action, newState, pastCost, cost)))
                 if frontier.update(newState, pastCost + cost):
                     # Found better way to go to |newState|, update backpointer.
+                    # jhm
+                    if self.verbose >= 1:
+                        print(" changing value for {0}, action: {1}, state: {2}".format(newState, action, state ))
+
                     backpointers[newState] = (action, state)
         if self.verbose >= 1:
             print("No path found")
@@ -86,16 +92,31 @@ class PriorityQueue:
         self.DONE = -100000
         self.heap = []
         self.priorities = {}  # Map from state to priority
-
+        self.verbosity = 0
     # Insert |state| into the heap with priority |newPriority| if
     # |state| isn't in the heap or |newPriority| is smaller than the existing
     # priority.
     # Return whether the priority queue was updated.
     def update(self, state, newPriority):
         oldPriority = self.priorities.get(state)
+        # jhm
+        # print( "old priority {0}, new_priority {1}".format(oldPriority, newPriority))
+        # print("  state: {0}  type state {1}".format(state, type(state)))
         if oldPriority == None or newPriority < oldPriority:
             self.priorities[state] = newPriority
-            heapq.heappush(self.heap, (newPriority, state))
+            try:
+                if self.verbosity > 0:
+                    print(" newPriority: {0}, state: {1}".format(newPriority, state))
+                heapq.heappush(self.heap, (newPriority, state))
+            except Exception as e:
+                print(sys.exc_info())
+                import pdb
+                pdb.set_trace()
+            #jhm
+            if len(self.heap) > 0:
+                mn = min([h[0] for h in self.heap])
+                #print(" heap min: {0}".format(mn))
+
             return True
         return False
 
@@ -104,7 +125,8 @@ class PriorityQueue:
     def removeMin(self):
         while len(self.heap) > 0:
             priority, state = heapq.heappop(self.heap)
-            if self.priorities[state] == self.DONE: continue  # Outdated priority, skip
+            if self.priorities[state] == self.DONE:
+                continue  # Outdated priority, skip
             self.priorities[state] = self.DONE
             return (state, priority)
         return (None, None) # Nothing left...
