@@ -13,18 +13,15 @@ class SegmentationProblem(util.SearchProblem):
 
     def startState(self):
         # ### START CODE HERE ###
-
-        self.verbosity = 0
-
-        state = 0 # , self.query)
-        self.init_cost = self.unigramCost(self.query)
-
+        self.verbosity = 1
+        state = 0
         if self.verbosity > 0:
-            cost = sum([self.unigramCost(part) for part in state])
             print("--Start--")
-            print("Func: '{0}' state= {1}, cost: {2}".format("startState",
-                                                             state, self.init_cost), )
-            self.end_state = len(self.query)
+            print(" -->{0} self.query= {1}".format("startState", self.query))
+        self.end_state = len(self.query)
+
+        if self.query == 'twowords':
+            print(self.query)
         return state
         # ### END CODE HERE ###
 
@@ -40,58 +37,25 @@ class SegmentationProblem(util.SearchProblem):
     def succAndCost(self, state):
         # ### START CODE HERE ###
 
+
         if self.verbosity > 1:
             cost = sum([self.unigramCost(word) for word in state])
-            print("-->'{0}' state= {1}".format("succAndCost", state),)
+            print("-->{0} state= {1}".format("succAndCost", state),)
 
         def segment_successors(state, uni_cost_func):
-
-            done_part = list(state[0])
-
-            next_part = state[1]
-            assert isinstance(next_part, str)
+            ri = state
+            right_part = self.query[ri:]
             succ_states = []
-            for i in range(1, len(next_part)+1):
+            for i in range(1, len(right_part)+1):
                 try:
-                    new_word = next_part[:i]
-                    new_right = next_part[i:]
-                    left_part = done_part + [new_word]
-                    new_state = (tuple(left_part), new_right)
-                    action = i
+                    new_word = right_part[:i]
                     tran_cost = uni_cost_func(new_word)
-                    succ_states.append((action, new_state, tran_cost))
+                    action = i
+                    succ_states.append((action, ri+i, tran_cost))
                 except Exception as e:
                     print(e)
             return succ_states
-
-        def segment_successors_old(words):
-            cur_cost = sum([self.unigramCost(word) for word in words])
-            succ_states = []
-            for wi in range(len(words)):
-                word = words[wi]
-                if len(word) <= 1:
-                    return []
-                old_word_cost = self.unigramCost(word)
-                for sj in range(1, len(word)):
-                    action = (wi, sj,) # add space after letter j in word wi
-                    new_left = word[:sj]
-                    new_right = word[sj:]
-                    new_words_cost = self.unigramCost(new_left) + self.unigramCost(new_right)
-                    new_words = (new_left, new_right,)
-                    new_state = tuple(words[:wi] + new_words + words[wi + 1:], )
-                    new_state_cost = cur_cost - old_word_cost + new_words_cost
-                    cost_change = new_state_cost - cur_cost
-                    succ_states.append((action, new_state, cost_change,))
-            if state[0] != self.query:
-                succ_states.append(((0, 0), (self.end_state,), 0,))
-            return succ_states
-
-        my_cost = sum([self.unigramCost(w) for w in state[0]])
-        if my_cost > self.init_cost:
-            return []
-
         next_states = segment_successors(state=state, uni_cost_func=self.unigramCost)
-
         return next_states
         # ### END CODE HERE ###
 
@@ -100,42 +64,41 @@ def segmentWords(query, unigramCost):
     if len(query) == 0:
         return ''
 
-
     ucs = util.UniformCostSearch(verbose=0)
     ucs.solve(SegmentationProblem(query, unigramCost))
 
     # ### START CODE HERE ###
-    if len(query) > 25:
-        return query
 
-    if False:
+    if True:
         print("totalCost: {0}".format(ucs.totalCost))
         print("actions: {0}".format(ucs.actions))
         print("numStatesExplored: {0}".format(ucs.numStatesExplored))
 
     query_cost = unigramCost(query)
-    if ucs.totalCost >= query_cost:
+
+    if ucs.totalCost > query_cost:
+        print(" cost > query_cost {0}".format(query_cost))
+        print(" res= {0}".format(query))
         return query
 
     if ucs.actions is None:
+        print(" no actions".format(query_cost))
+        print(" res= {0}".format(query))
         return query
 
-    state = [[],query]
-    for ai in ucs.actions:
+    words = [query]
+    for i, ai in enumerate(ucs.actions):
         try:
-            left_words, right_word = state
-            new_word = right_word[:ai]
-            left_words.append(new_word)
-            new_right = right_word[ai:]
-            state = [left_words, new_right]
+            last_word = words[-1]
+            last_left = last_word[:ai]
+            last_right = last_word[ai:]
+            words = words[:-1] + [last_left, last_right]
         except Exception as e:
             print(e)
-        if len(new_right) == 0:
-            break
 
-    left_words, right_word = state
-    res = ' '.join(left_words)
-    if False:
+    res = ' '.join(words)
+    res = res.rstrip()
+    if True:
         print(" res: '{0}'".format(res))
         print("--End--\n")
     return res
