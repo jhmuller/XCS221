@@ -24,9 +24,15 @@ class ValueIteration(MDPAlgorithm):
         mdp.computeStates()
         def computeQ(mdp, V, state, action):
             # Return Q(state, action) based on V(state).
-            return sum(prob * (reward + mdp.discount() * V[newState]) \
-                            for newState, prob, reward in mdp.succAndProbReward(state, action))
-
+            # jhm
+            res = None
+            try:
+                succs = mdp.succAndProbReward(state, action)
+                res = sum(prob * (reward + mdp.discount() * V[newState])\
+                            for newState, prob, reward in succs)
+            except Exception as e:
+                print(f"Err: {e}")
+            return res
         def computeOptimalPolicy(mdp, V):
             # Return the optimal policy given the values V.
             pi = {}
@@ -40,7 +46,12 @@ class ValueIteration(MDPAlgorithm):
             newV = {}
             for state in mdp.states:
                 # This evaluates to zero for end states, which have no available actions (by definition)
-                newV[state] = max(computeQ(mdp, V, state, action) for action in mdp.actions(state))
+                # jhm
+                if False:
+                    newV[state] = max(computeQ(mdp, V, state, action) for action in mdp.actions(state))
+                else:
+                    arr = [computeQ(mdp, V, state, action) for action in mdp.actions(state)]
+                    newV[state] = max(arr)
             numIters += 1
             if max(abs(V[state] - newV[state]) for state in mdp.states) < epsilon:
                 V = newV

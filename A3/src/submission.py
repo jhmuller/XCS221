@@ -10,28 +10,54 @@ from util import ValueIteration
 class CounterexampleMDP(util.MDP):
     # Return a value of any type capturing the start state of the MDP.
     def startState(self):
-        pass
         # ### START CODE HERE ###
+        if not hasattr(self, "first_time"):
+            self.first_time = True
+            if not hasattr(self, "verbosity"):
+                self.verbosity = 0
+            if self.verbosity > 0:
+                print("\n---New Game---")
+        return "start"
         # ### END CODE HERE ###
 
     # Return a list of strings representing actions possible from |state|.
     def actions(self, state):
-        pass
         # ### START CODE HERE ###
+        if state == "start":
+            return ["go"]
+        else:
+            return ["stay"]
         # ### END CODE HERE ###
 
     # Given a |state| and |action|, return a list of (newState, prob, reward) tuples
     # corresponding to the states reachable from |state| when taking |action|.
     # Remember that if |state| is an end state, you should return an empty list [].
     def succAndProbReward(self, state, action):
-        pass
+        if hasattr(self, "verbosity") and self.verbosity > 0:
+            print(f"-->succAndProbReward: state: {state}, action: {action}")
         # ### START CODE HERE ###
+        res = []
+        if state == "start":
+            if action == "go":
+                res.append(("good", 0.01, 100))
+                res.append(("bad", 0.90, -100))
+            else:
+                raise ValueError(f"invalid action {action}")
+        elif state == "bad":
+            res = []
+            #res.append(("end", 1, -1))
+        elif state == "good":
+            #res.append(("end", 1, 1))
+            res = []
+        else:
+            res = []
+        return res
         # ### END CODE HERE ###
 
     # Set the discount factor (float or integer) for your counterexample MDP.
     def discount(self):
-        pass
         # ### START CODE HERE ###
+        return 1.0
         # ### END CODE HERE ###
 
 ############################################################
@@ -84,7 +110,7 @@ class BlackjackMDP(util.MDP):
         if not hasattr(self, "first_time"):
             self.first_time = True
             if not hasattr(self, "verbosity"):
-                self.verbosity = 1
+                self.verbosity = 0
             if self.verbosity > 0:
                 print("\n---New Game---")
                 print(f"Card Values {self.cardValues}")
@@ -92,20 +118,17 @@ class BlackjackMDP(util.MDP):
                 print(f"Threshold {self.threshold}")
                 print(f"PeekCost {self.peekCost}")
 
-        self.verbosity = 1
         if self.verbosity > 0:
             print(f" --succAndProbReward  input state: {state}, action: {action}")
 
         if len(state) < 3:
-            if self.verbosity > 0:
-                print("  irregular input")
-            return []
+            raise RuntimeError(f"state has {len(state)} elements")
 
         totalCardValueInHand, nextCardIndexIfPeeked, deckCardCounts = state
 
         if deckCardCounts is None:
             res= [] #[((totalCardValueInHand, None, None), 1, 0)]
-            if self.verbosity > 0:
+            if self.verbosity > 1:
                 print(f"  deck is {deckCardCounts} res  {res}")
             return res
 
@@ -113,22 +136,24 @@ class BlackjackMDP(util.MDP):
         possibleCards = sum([n > 0 for n in deckCardCounts])
 
         if possibleCards == 0:
-            res= [] # [((totalCardValueInHand, None, None), 1, 0)]
+            raise ValueError(f"deckCardCounts: {deckCardCounts}")
+            res = []  # [((totalCardValueInHand, None, None), 1, 0)]
             if self.verbosity > 0:
                 print(f"  out of cards, res {res}")
             return res
 
-        prob = 1.0 / possibleCards
+        probs = [float(d) / cardsLeft for d in deckCardCounts]
+
         res = []
         if action == "Take":
             cardCounts = list(deckCardCounts)
             for ti in range(len(self.cardValues)):
-                if cardCounts[ti] > 0:
+                if probs[ti] > 0:
                     cardCounts[ti] -= 1
                     newValue = totalCardValueInHand + self.cardValues[ti]
                     if newValue > self.threshold:  # bust
                         newState = (newValue, None, None)
-                        res.append((newState, prob, 0))
+                        res.append((newState, probs[ti], 0))
                     else:
                         if sum(cardCounts) == 0:
                             newState = (newValue, None, None)
@@ -136,20 +161,19 @@ class BlackjackMDP(util.MDP):
                         else:
                             newState = (newValue, None, tuple(cardCounts))
                             reward = 0
-                        res.append((newState, prob, reward))
+                        res.append((newState, probs[ti], reward))
                     cardCounts[ti] += 1
         elif action == "Peek":
             if nextCardIndexIfPeeked is not None:
                 res = []
             else:
                 for ti in range(len(self.cardValues)):
-                    if deckCardCounts[ti] > 0:
-                        peekValue = totalCardValueInHand + self.cardValues[ti]
+                    if probs[ti] > 0:
                         newState = (totalCardValueInHand, ti, deckCardCounts)
-                        res.append((newState, prob, - self.peekCost))
+                        res.append((newState, probs[ti], - self.peekCost))
 
         elif action == "Quit":
-            res = [((totalCardValueInHand, None, None), 1, 0)]
+            res = [((totalCardValueInHand, None, None), 1, totalCardValueInHand)]
         else:
             raise ValueError(f"unexpected action: {action}")
         if self.verbosity > 0:
@@ -168,8 +192,13 @@ def peekingMDP():
     Return an instance of BlackjackMDP where peeking is the
     optimal action at least 10% of the time.
     """
-    pass
     # ### START CODE HERE ###
+    cardValues = (2, 21)
+    multiplicity = 1
+    threshold = 20
+    peekCost = 1
+    res = BlackjackMDP(cardValues, multiplicity, threshold, peekCost)
+    return res
     # ### END CODE HERE ###
 
 ############################################################

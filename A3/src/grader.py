@@ -52,6 +52,7 @@ class Test_2a(GradedTestCase):
     mdp.computeStates()
     algorithm.solve(mdp, .001)
     newVal = algorithm.V[mdp.startState()]
+    print(f"original {originalVal}, newval {newVal}")
     # BEGIN_HIDE
     # END_HIDE
 
@@ -82,7 +83,7 @@ class Test_3a(GradedTestCase):
     ]
     for gold, mdp, state, action in tests:
       # Feel free to uncomment this lines if you'd like to print out states/actions
-      print(('   state: {}, action: {}'.format(state, action)))
+      # print(('   state: {}, action: {}'.format(state, action)))
       self.assertEqual(gold, mdp.succAndProbReward(state, action))
 
   @graded(is_hidden=True)
@@ -107,6 +108,9 @@ class Test_3b(GradedTestCase):
     self.assertEqual(mdp.threshold, 20)
     self.assertEqual(mdp.peekCost, 1)
     f = len([a for a in list(vi.pi.values()) if a == 'Peek']) / float(len(list(vi.pi.values())))
+    # jhm
+    for k in vi.pi.keys():
+        print(f"{k}: {vi.pi[k]}")
     self.assertLess(.1, f)
     # Feel free to uncomment these lines if you'd like to print out states/actions
     # for k, v in vi.pi.iteritems():
