@@ -169,12 +169,12 @@ class MinimaxAgent(MultiAgentSearchAgent):
     """
 
     # ### START CODE HERE ###
-    verbosity = 1
+    verbosity = 2
     if verbosity > 0:
       import datetime
       import sys
 
-    if verbosity > 0:
+    if verbosity > 1:
       print(f"--getAction: <{datetime.datetime.now()}> gameState: \n{gameState}\n >")
       print(f"  depth {self.depth}")
       print("---")
@@ -212,7 +212,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
       return bestValue, bestIndices, chosenIndex
 
     def Vminmax(state, index, depth, verbosity=0):
-      if verbosity > 0:
+      if verbosity > 2:
         print(f"  --Vminmax: depth: {depth} agentIndex: {index} <{datetime.datetime.now()}> ")
 
       if state.isLose() or state.isWin():
@@ -223,7 +223,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
       try:
         legalMoves = state.getLegalActions(agentIndex=index)
-        if verbosity > 0:
+        if verbosity > 2:
           print(f" moves: {legalMoves}")
       except Exception as e:
         legalMoves = []
@@ -246,7 +246,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
       nextIndex = (index + 1) % state.getNumAgents()
       try:
-        if verbosity > 0:
+        if verbosity > 2:
           pass
         values = [Vminmax(ss, nextIndex, nextDepth, verbosity) for ss in succStates]
       except Exception as e:
@@ -274,7 +274,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         print("**")
 
       res = values[chosenIndex]
-      if verbosity > 0:
+      if verbosity > 2:
         print(f" values: {values}, func: {func}, bestValue: {bestValue} chosenIndex={chosenIndex} ")
         print(f"  choice action is {legalMoves[chosenIndex]} for agent {index}")
         print("")
@@ -313,7 +313,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
       print(f"  bestIndices is empty, bestValue: {bestValue}")
       res = []
     else:
-      if verbosity > 0:
+      if verbosity > 1:
         print(f"  chosenIndex: {chosenIndex} action: {legalMoves[chosenIndex]} len(legalMoves): {len(legalMoves)}")
       res = legalMoves[chosenIndex]
     # BEGIN_HIDE
