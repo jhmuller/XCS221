@@ -572,6 +572,60 @@ def betterEvaluationFunction(currentGameState):
   """
   pass
   # ### START CODE HERE ###
+  verbosity = 0
+
+  def futurePacPositions(state, maxTimeSteps=0):
+    positions = set([currentGameState.getPacmanPosition()])
+    curStates = [state]
+    for ti in range(maxTimeSteps):
+      moves = [s.getLegalActions(agentIndex=0) for s in curStates]
+      curStates = [state.generateSuccessor(agentIndex=0, action=move) for move in moves]
+      newPos = set([ns.getPacmanPosition() for ns in curStates])
+      positions.append(newPos)
+    return positions
+
+  def futureGhostPositions(state, maxTimeSteps=0):
+    numGhosts = state.getNumAgents() -
+    curStates = [state]
+    z = zip(curState)
+    positions = [s.getGhostPosition(agentIndex=index)] for index in range(1,numGhosts)]
+    curStates = [state]
+    for ti in range(maxTimeSteps):
+      moves = [s.getLegalActions(agentIndex=0) for s in curStates]
+      curStates = [state.generateSuccessor(agentIndex=0, action=move) for move in moves]
+      newPos = set([ns.getPacmanPosition() for ns in curStates])
+      positions.append(newPos)
+    return positions
+
+  def foodScore(state, timeSteps):
+    pass
+
+  def dangerScore(state):
+    pass
+
+  def winScore(state):
+    pass
+
+  print(f"{currentGameState}")
+
+  ghostPositions = currentGameState.getGhostPositions()
+  pacmanPosition = currentGameState.getPacmanPosition()
+  numFood = currentGameState.getNumFood()
+  numAgents = currentGameState.getNumAgents()
+  capsules = currentGameState.getCapsules()
+  walls = currentGameState.getWalls()
+  oldFood = currentGameState.getFood()
+  print(oldFood)
+  print("here")
+  if False:
+
+
+    successorGameState = currentGameState.generatePacmanSuccessor(action)
+    newPos = successorGameState.getPacmanPosition()
+    oldFood = currentGameState.getFood()
+    newGhostStates = successorGameState.getGhostStates()
+    newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+
   # ### END CODE HERE ###
 
 # Abbreviation
@@ -594,15 +648,3 @@ def run(layname, pac, ghosts, nGames = 1, name = 'games', catchExceptions=True):
   print(('*** Won %d out of %d games. Average score: %f ***' % (stats['wins'], len(games), sum(stats['scores']) * 1.0 / len(games))))
 
   return stats
-
-
-def oneA():
-  import grader
-  from ghostAgents import RandomGhost, DirectionalGhost
-  if True:
-    stats = run('smallClassic', AlphaBetaAgent(depth=2), [DirectionalGhost(i + 1) for i in range(2)],
-              name='%s (depth %d)' % ('alphabeta', 2))
-    print(stats)
-  return stats
-
-# oneA()
