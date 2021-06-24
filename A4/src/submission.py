@@ -358,14 +358,10 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             res = float("-inf")
           return res
 
-        if index == 0:
-          func = max
-        else:
-          func = min
+        func = max if index == 0 else min
         values = [e1 for e1, e2 in valueTups]
         bestValue, bestIndices, chosenIndex = getBestIndices(func=func, xlist=values,
                                                              choser=min)
-        realIndex = valueTups[chosenIndex][1]
         res = values[chosenIndex]
         if verbosity > 2:
           print(f" values: {values}, func: {func}, bestValue: {bestValue} chosenIndex={chosenIndex} ")
@@ -441,8 +437,128 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
       All ghosts should be modeled as choosing uniformly at random from their
       legal moves.
     """
-    pass
     # ### START CODE HERE ###
+    def getBestIndices(func=max, xlist=None, choser=random.choice):
+      try:
+        bestValue = func(xlist)
+        bestIndices = [i for i in range(len(xlist)) if xlist[i] == bestValue]
+
+        if len(bestIndices) == 0:
+          raise RuntimeError(f"  bestIndices is empty, bestValue: {bestValue}")
+
+        chosenIndex = choser(bestIndices)
+        return bestValue, bestIndices, chosenIndex
+      except Exception as e:
+        print(str(e))
+        raise RuntimeError(str(e))
+
+    def VminmaxExp(state, index, depth,
+                     lower_bound=float("-inf"),
+                     upper_bound=float("inf"),
+                     verbosity=0):
+      if verbosity > 2:
+        print(f"  --VminmaxPrune: depth: {depth} agentIndex: {index} > ")
+        print(f"  lower_bound: {lower_bound} upper_bound: {upper_bound}")
+        print(f"  state: \n{state}")
+
+      if state.isLose() or state.isWin():
+        return state.getScore()
+
+      if depth == 0:
+        return self.evaluationFunction(state)
+
+      legalMoves = state.getLegalActions(agentIndex=index)
+      succStates = [state.generateSuccessor(index, m) for m in legalMoves]
+
+      nextDepth = depth
+      if index == state.getNumAgents() - 1:
+        nextDepth -= 1
+      nextIndex = (index + 1) % state.getNumAgents()
+      try:
+        # visit descendents in order of scores
+        stateScores = [self.evaluationFunction(s) for s in succStates]
+        reverse = index == 0
+        scoreTups = sorted([(y, x) for x, y in list(enumerate(stateScores))], reverse=reverse)
+        valueTups = []
+        for score, si in scoreTups:
+          ss = succStates[si]
+          value = VminmaxExp(ss, nextIndex, nextDepth,
+                               lower_bound=lower_bound,
+                               upper_bound=upper_bound,
+                               verbosity=verbosity)
+          valueTups.append((value, si))
+
+        if len(valueTups) == 0:
+          res = float("inf")
+          if index == 0:
+            res = float("-inf")
+          return res
+
+        values = [e1 for e1, e2 in valueTups]
+
+        if index == 0:
+          bestValue, bestIndices, chosenIndex = getBestIndices(func=max, xlist=values,
+                                                               choser=min)
+          res = values[chosenIndex]
+        else:
+          res = float(sum(values)) / len(values)
+
+        if verbosity > 2:
+          print(f" res = {res} values: {values} ")
+          print("----")
+      except Exception as e:
+         print("in VminimaxPrune")
+         raise RuntimeError(e)
+      return res
+
+    ## getState ##
+    if hasattr(self, "callNumber"):
+      self.callNumber += 1
+    else:
+      if not hasattr(self, "verbosity"):
+        self.verbosity = 0
+        print(f" {self.verbosity}")
+      self.callNumber = 0
+      if self.verbosity > 1:
+        print(f"  numAgents: {gameState.getNumAgents()}")
+
+    if self.verbosity > 1:
+      print(f"--getAction: depth: {self.depth} callNumber: {self.callNumber} ")
+      if self.verbosity > 1:
+        print(f"gameState: \n{gameState}\n >")
+
+    try:
+      if self.depth == 0:
+        raise ValueError("depth is 0")
+
+      if gameState.isWin() or gameState.isLose():
+        return []
+      legalMoves = gameState.getLegalActions()
+
+      if len(legalMoves) == 0:
+        raise ValueError("no legal moves")
+
+      succStates = [gameState.generateSuccessor(0, m) for m in legalMoves]
+      nextIndex = (self.index + 1) % gameState.getNumAgents()
+      moveValues = [VminmaxExp(ss, nextIndex, self.depth, lower_bound=float("-inf"),
+                                 upper_bound=float("inf"), verbosity=self.verbosity)
+                    for ss in succStates]
+
+      bestValue, bestIndices, chosenIndex = getBestIndices(func=max, xlist=moveValues,
+                                                             choser=random.choice)
+      if len(bestIndices) == 0:
+        raise RuntimeError("len(bestIndices) == 0")
+
+      res = legalMoves[chosenIndex]
+      if self.verbosity > 1:
+        print(f"  *** bestValue: {bestValue} chosenIndex: {chosenIndex} action: {legalMoves[chosenIndex]}")
+        print(f"   len(legalMoves): {len(legalMoves)}")
+        print("---")
+
+      return res
+    except Exception as e:
+      print("my error")
+      raise RuntimeError(e)
     # ### END CODE HERE ###
 
 ######################################################################################
