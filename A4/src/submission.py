@@ -217,7 +217,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
     #### getAction ####
     try:
-      verbosity = 1
+      verbosity = 0
       if hasattr(self, "callNumber"):
         self.callNumber += 1
       else:
@@ -572,30 +572,6 @@ def betterEvaluationFunction(currentGameState):
   """
   pass
   # ### START CODE HERE ###
-  verbosity = 0
-
-  def futurePacPositions(state, maxTimeSteps=0):
-    positions = set([currentGameState.getPacmanPosition()])
-    curStates = [state]
-    for ti in range(maxTimeSteps):
-      moves = [s.getLegalActions(agentIndex=0) for s in curStates]
-      curStates = [state.generateSuccessor(agentIndex=0, action=move) for move in moves]
-      newPos = set([ns.getPacmanPosition() for ns in curStates])
-      positions.append(newPos)
-    return positions
-
-  def futureGhostPositions(state, maxTimeSteps=0):
-    numGhosts = state.getNumAgents() -
-    curStates = [state]
-    z = zip(curState)
-    positions = [s.getGhostPosition(agentIndex=index)] for index in range(1,numGhosts)]
-    curStates = [state]
-    for ti in range(maxTimeSteps):
-      moves = [s.getLegalActions(agentIndex=0) for s in curStates]
-      curStates = [state.generateSuccessor(agentIndex=0, action=move) for move in moves]
-      newPos = set([ns.getPacmanPosition() for ns in curStates])
-      positions.append(newPos)
-    return positions
 
   def foodScore(state, timeSteps):
     pass
@@ -605,7 +581,46 @@ def betterEvaluationFunction(currentGameState):
 
   def winScore(state):
     pass
+  def futurePacPositions(state, maxTimeSteps=0):
+    positions = [(0, set([currentGameState.getPacmanPosition()]))]
+    curStates = [state]
+    for ti in range(maxTimeSteps):
+      try:
+        stateMoves = [(s,s.getLegalActions(agentIndex=0)) for s in curStates]
+        curStates = []
+        for s, moves in stateMoves:
+          for move in moves:
+            curStates.append(state.generateSuccessor(agentIndex=0, action=move))
+        for i, cs in enumerate(curStates):
+          print(f"{i}\n{cs}")
+        newPos = [(ti+1, set([ns.getPacmanPosition() for ns in curStates]))]
+        positions.append(newPos)
+      except Exception as e:
+        print(str(e))
+        raise RuntimeError(str(e))
+    return positions
 
+  def futureGhostPositions(state, maxTimeSteps=0):
+    try:
+      ghosts = list(range(1, state.getNumAgents()))
+      curStates = [state]
+      positions = [(gi, s.getGhostPosition(agentIndex=gi)) for s in curStates for gi in ghosts]
+    except Exception as e:
+      print(str(e))
+      raise RuntimeError(str(e))
+
+    ### eval ###
+    verbosity = 0
+    for ti in range(maxTimeSteps):
+      try:
+        moves = [(gi, s.getLegalActions(agentIndex=gi)) for s in curStates for gi in ghosts]
+        curStates = [(gi, state.generateSuccessor(agentIndex=gi, action=move)) for gi,move in moves]
+        newPos = set([(gi, ns.getGhostPosition(agentIndex=gi)) for gi, ns in curStates])
+        positions.append(newPos)
+      except Exception as e:
+        print(str(e))
+        raise RuntimeError(str(e))
+    return positions
   print(f"{currentGameState}")
 
   ghostPositions = currentGameState.getGhostPositions()
@@ -614,12 +629,13 @@ def betterEvaluationFunction(currentGameState):
   numAgents = currentGameState.getNumAgents()
   capsules = currentGameState.getCapsules()
   walls = currentGameState.getWalls()
+  print(walls)
   oldFood = currentGameState.getFood()
   print(oldFood)
   print("here")
+  pacmanPositions = futurePacPositions(state=currentGameState, maxTimeSteps=3)
+  ghostPositions = futureGhostPositions(state=currentGameState, maxTimeSteps=2)
   if False:
-
-
     successorGameState = currentGameState.generatePacmanSuccessor(action)
     newPos = successorGameState.getPacmanPosition()
     oldFood = currentGameState.getFood()
