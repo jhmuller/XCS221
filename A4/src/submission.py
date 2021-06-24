@@ -346,7 +346,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             if value < upper_bound:
               upper_bound = value
 
-          if lower_bound > upper_bound:
+          if lower_bound >= upper_bound:
             if verbosity > 2:
               print(f" {upper_bound} < {lower_bound} No overlap of upper and lower bounds, breaking")
             continue
@@ -380,13 +380,6 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     if hasattr(self, "callNumber"):
       self.callNumber += 1
     else:
-      import sys
-      print("test to stderr", file=sys.stderr)
-      print(f" no callNumber")
-      callStack = getCallStack(depths=list(range(6)))
-      for depth, fobj, fname in callStack:
-        if fname is not None:
-          print(f"{depth}: {fname}")
       if not hasattr(self, "verbosity"):
         self.verbosity = 0
         print(f" {self.verbosity}")
