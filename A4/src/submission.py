@@ -584,18 +584,98 @@ def betterEvaluationFunction(currentGameState):
       positions.append(newPos)
     return positions
 
-  def futureGhostPositions(state, maxTimeSteps=0):
-    numGhosts = state.getNumAgents() -
-    curStates = [state]
-    z = zip(curState)
-    positions = [s.getGhostPosition(agentIndex=index)] for index in range(1,numGhosts)]
-    curStates = [state]
-    for ti in range(maxTimeSteps):
-      moves = [s.getLegalActions(agentIndex=0) for s in curStates]
-      curStates = [state.generateSuccessor(agentIndex=0, action=move) for move in moves]
-      newPos = set([ns.getPacmanPosition() for ns in curStates])
-      positions.append(newPos)
-    return positions
+  class Node(object):
+    def __init__(self, id, pos):
+      self.id = id
+      self.pos = pos
+
+
+  class Graph(object):
+    def __init__(self):
+      from collections import defaultdict
+      self.nodes = dict()
+      self.edges = set()
+
+    def isNode(self, node):
+      try:
+        if id in self.nodes:
+          return True
+        return False
+      except Exception as e:
+        import sys
+        print(sys.exc_info())
+        raise RuntimeError(str(e))
+
+    def makeGraph(self, walls):
+      self.wallData = walls.data
+      self.cellsData = [[not c for c in row] for row in walls.data]
+      for ri, row in enumerate(self.cellsData):
+        for ci, col in enumerate(row):
+          try:
+            if col:
+              self.addNode((ri, ci))
+              if ri > 0:
+                if self.cellsData[ri-1][ci]:
+                  self.addEdge((ri, ci), (ri-1, ci))
+              if ci > 0:
+                if self.cellsData[ri][ci - 1]:
+                  self.addEdge((ri, ci), (ri, ci - 1))
+          except Exception as e:
+            import sys
+            print(f" {ri} {ci} self.cellsData[ri][ci]")
+            print(sys.exc_info())
+            raise RuntimeError(str(e))
+      return None
+
+    def addNode(self, pos):
+      id = 0
+      if len(self.nodes) > 0:
+        id = max([v  for k,v in self.nodes.items()]) + 1
+      try:
+        self.nodes[pos] = id
+      except Exception as e:
+        import sys
+        print(sys.exc_info())
+        raise RuntimeError(str(e))
+
+    def addEdge(self, pos1, pos2):
+      try:
+        id1 = self.nodes[pos1]
+        id2 = self.nodes[pos2]
+        self.edges.add(( (id1, pos1), (id2, pos2) ))
+        #self.edges[id1].add(id2)
+        #self.edges[id2].add(id2)
+      except Exception as e:
+        import sys
+        print(sys.exc_info())
+        raise RuntimeError(str(e))
+
+
+    def allPairsShortestPaths(self):
+      nodes = sorted(list(self.nodes))
+      print(f" {len(self.nodes)} nodes")
+      dist = []
+      for i in range(len(self.nodes)):
+        dist.append([float("inf") for n in range(len(self.nodes))])
+
+      # distance for all edges
+      for i, e in  enumerate(self.edges):
+        n1 = e[0]
+        n2 = e[1]
+        dist[n1[0]][n2[0]] = 1
+      numNodes = len(self.nodes)
+      for k in range(numNodes):
+        for i in range(numNodes):
+          for j in range(numNodes):
+            if dist[i][j] > dist[i][k] + dist[k][j]:
+              dist[i][j] = dist[i][k] + dist[k][j]
+      self.dist = dist
+      print('here')
+      return None
+
+
+  def distance(stae, p1, p2):
+    pass
 
   def foodScore(state, timeSteps):
     pass
@@ -614,6 +694,10 @@ def betterEvaluationFunction(currentGameState):
   numAgents = currentGameState.getNumAgents()
   capsules = currentGameState.getCapsules()
   walls = currentGameState.getWalls()
+
+  gameGraph = Graph()
+  gameGraph.makeGraph(walls)
+  gameGraph.allPairsShortestPaths()
   oldFood = currentGameState.getFood()
   print(oldFood)
   print("here")
