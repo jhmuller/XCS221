@@ -12,6 +12,22 @@ def create_chain_csp(n):
     csp = util.CSP()
     # Problem 0c
     # ### START CODE HERE ###
+    def xor(v1, v2):
+        return v1 != v2
+    print(f"n: {n}")
+    for vi, v in enumerate(variables):
+        try:
+            csp.add_variable(v, [0,1])
+            if vi > 0:
+                csp.add_binary_factor(variables[vi-1], variables[vi], xor)
+        except Exception as e:
+            import sys
+            print(sys.exc_info())
+            raise RuntimeError(e)
+    Bsearch = BacktrackingSearch()
+    Bsearch.solve(csp, ac3=False)
+    Bsearch.print_stats()
+
     # ### END CODE HERE ###
     return csp
 
@@ -148,11 +164,19 @@ class BacktrackingSearch():
         @param numAssigned: Number of currently assigned variables
         @param weight: The weight of the current partial assignment.
         """
-
+        # jhm
+        if False:
+            if hasattr(self, "numCallsBacktrack"):
+                self.numCallsBacktrack += 1
+            else:
+                self.numCallsBacktrack = 1
+            print(f" \item call \# {self.numCallsBacktrack} assignment [{assignment}]  ")
+        # print(f"   assignments {self.numAssignments}  numOptimal {self.numOptimalAssignments} all {self.allAssignments}")
+        # A satisfiable solution have been found. Update the statistics.
         self.numOperations += 1
         assert weight > 0
         if numAssigned == self.csp.numVars:
-            # A satisfiable solution have been found. Update the statistics.
+
             self.numAssignments += 1
             newAssignment = {}
             for var in self.csp.variables:
@@ -180,11 +204,18 @@ class BacktrackingSearch():
         if not self.ac3:
             # When arc consistency check is not enabled.
             for val in ordered_values:
+
                 deltaWeight = self.get_delta_weight(assignment, var, val)
                 if deltaWeight > 0:
                     assignment[var] = val
                     self.backtrack(assignment, numAssigned + 1, weight * deltaWeight)
                     del assignment[var]
+                else:
+                    pass
+                    if False:
+                        # jhm
+                        print(f"  \\\\ don't call for  var:{var} val:{val}  deltaWeight {deltaWeight}")
+                        # jhm
         else:
             # Arc consistency check is enabled.
             # Problem 1c: skeleton code for AC-3
@@ -192,6 +223,10 @@ class BacktrackingSearch():
             for val in ordered_values:
                 deltaWeight = self.get_delta_weight(assignment, var, val)
                 if deltaWeight > 0:
+                    if False:
+                        # jhm
+                        print(f"  \\\\ look at var:{var} val:{val}  deltaWeight {deltaWeight}")
+                        # jhm
                     assignment[var] = val
                     # create a deep copy of domains as we are going to look
                     # ahead and change domain values

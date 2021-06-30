@@ -33,18 +33,47 @@ instructions to regenerate this handout with your typeset \LaTeX{} solutions.
 % <SCPD_SUBMISSION_TAG>_0a
 \begin{answer}
   % ### START CODE HERE ###
+Variables: One variable $B_i$ for each button $i  \in  [1 \ldots m] $.  The domain for each variable is $[0, 1]$ or \textbf{off} and \textbf{on}.
+
+Constraints: One constraint $f_i$ for every light bulb $j  \in [1 \ldots n]$ .
+
+$f_i =  sum_{\text{ $j$ such that switch $B_j$ controls light $i$}}{B_j} = \text{1 mod 2}$
   % ### END CODE HERE ###
 \end{answer}
 % <SCPD_SUBMISSION_TAG>_0a
 \clearpage
 
 \LARGE
-0.b
+
+
 \normalsize
 
 % <SCPD_SUBMISSION_TAG>_0b
 \begin{answer}
   % ### START CODE HERE ###
+
+i) There are 2 consistent assignments.  [1, 0, 1]  and [0, 1, 0]
+
+ii)
+There will be 9 calls to Backtrack
+\begin{enumerate}
+ \item call \# 1 assignment [{}]  
+ \item call \# 2 assignment [{'X1': 0}]  
+ \item call \# 3 assignment [{'X1': 0, 'X3': 0}]  
+  \\ don't call for  var:X2 val:0  deltaWeight 0.0
+ \item call \# 4 assignment [{'X1': 0, 'X3': 0, 'X2': 1}]  
+ \item call \# 5 assignment [{'X1': 0, 'X3': 1}]  
+  \\ don't call for  var:X2 val:0  deltaWeight 0.0
+  \\ don't call for  var:X2 val:1  deltaWeight 0.0
+ \item call \# 6 assignment [{'X1': 1}]  
+ \item call \# 7 assignment [{'X1': 1, 'X3': 0}]  
+  \\ don't call for  var:X2 val:0  deltaWeight 0.0
+  \\ don't call for  var:X2 val:1  deltaWeight 0.0
+ \item call \# 8 assignment [{'X1': 1, 'X3': 1}]  
+ \item call \# 9 assignment [{'X1': 1, 'X3': 1, 'X2': 0}]  
+  \\ don't call for  var:X2 val:1  deltaWeight 0.0
+\end{enumerate}
+
   % ### END CODE HERE ###
 \end{answer}
 % <SCPD_SUBMISSION_TAG>_0b
