@@ -442,9 +442,8 @@ def get_sum_variable(csp, name, variables, maxSum):
 
         csp.add_variable(result, tuple(range(0, maxSum+1)))
 
-        # no input variable, result should be False
         if len(variables) == 0:
-            csp.add_unary_factor(result, lambda val: 0)
+            csp.add_unary_factor(result, lambda val: val == 0)
             return result
 
         domain = [(i, j) for i in range(0, maxSum+1) for j in range(i, maxSum+1) ]
@@ -567,8 +566,43 @@ class SchedulingCSPConstructor():
         """
         # Problem 3a
         #Hint: If a request doesn't specify the quarter(s), do nothing.
-        pass
         # ### START CODE HERE ###
+        verbosity = 0
+
+        if verbosity > 0:
+            print(f"\n  add_quarter_constraint\n")
+            numVars = len(csp.variables)
+            numRequests = len(self.profile.requests)
+            print(f" numVars {numVars}  numRequests {numRequests}")
+            # print(f" values {csp.values}")
+        requests = self.profile.requests
+        if verbosity > 1:
+            for ri, req in enumerate(requests):
+                print(f"[{ri}]  {req}")
+        variables = csp.variables
+        for vi, var in enumerate(csp.variables):
+            if verbosity > 1:
+                print(f"vi {vi} var: {var}")
+                print(f"   domain: [{csp.values[var]}]")
+            req, qtr = var
+            csp.add_unary_factor((req, qtr), \
+                             lambda cid: cid is None or \
+                                         qtr in req.quarters)
+            #print(f"req: {req}  qtr: {qtr}")
+            #print("")
+        try:
+            for var in csp.unaryFactors.keys():
+                pass
+                # print(f"factors for {var}")
+                # print(f"   {csp.unaryFactors[var]}")
+        except Exception as e:
+            import sys
+            print(sys.exc_info())
+            raise RuntimeError(str(e))
+
+
+        if verbosity > 1:
+            print("done")
         # ### END CODE HERE ###
 
     def add_request_weights(self, csp):
