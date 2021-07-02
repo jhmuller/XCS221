@@ -48,6 +48,41 @@ def create_nqueens_csp(n = 8):
     csp = util.CSP()
     # Problem 1a
     # ### START CODE HERE ###
+    print(f"n: {n}")
+
+    try:
+        def check_row_diag(r1=None, r2=None, k=None):
+            def diff_row_diff_diag(r1, r2):
+                if r1 == r2:
+                    return 0
+                if abs(r1 - r2) == k:
+                    return 0
+                return 1
+            return diff_row_diff_diag
+
+
+    except Exception as e:
+        import sys
+        print(sys.exc_info())
+        raise RuntimeError(str(e))
+
+    domain = list(range(n))
+    for vi in range(n):
+        try:
+            csp.add_variable(f"v_{vi}", domain)
+            for vj in range(vi):
+                k = vi - vj
+                f_k = check_row_diag(k=k)
+                csp.add_binary_factor(f"v_{vi}", f"v_{vj}", f_k)
+        except Exception as e:
+            import sys
+            print(sys.exc_info())
+            raise RuntimeError(e)
+
+    Bsearch = BacktrackingSearch()
+    Bsearch.solve(csp)
+    # Bsearch.print_stats()
+
     # ### END CODE HERE ###
     return csp
 
@@ -165,12 +200,12 @@ class BacktrackingSearch():
         @param weight: The weight of the current partial assignment.
         """
         # jhm
-        if False:
+        if True:
             if hasattr(self, "numCallsBacktrack"):
                 self.numCallsBacktrack += 1
             else:
                 self.numCallsBacktrack = 1
-            print(f" \item call \# {self.numCallsBacktrack} assignment [{assignment}]  ")
+            # print(f" \item call \# {self.numCallsBacktrack} assignment [{assignment}]  ")
         # print(f"   assignments {self.numAssignments}  numOptimal {self.numOptimalAssignments} all {self.allAssignments}")
         # A satisfiable solution have been found. Update the statistics.
         self.numOperations += 1
@@ -266,8 +301,28 @@ class BacktrackingSearch():
             # Hint: get_delta_weight gives the change in weights given a partial
             #       assignment, a variable, and a proposed value to this variable
             # Hint: for ties, choose the variable with lowest index in self.csp.variables
-            pass
+
             # ### START CODE HERE ###
+
+            # The dictionary of domains of every variable in the CSP.
+            vars = self.csp.variables
+            smallestSize = float("inf")
+            for var in vars:
+                if var not in assignment:
+                    thisDomain = self.domains[var]
+                    thisSize = 0
+                    for d in thisDomain:
+                        if self.get_delta_weight(assignment, var, val=d) > 0:
+                            thisSize += 1
+                    dSize = len(thisDomain)
+                    if dSize != thisSize:
+                        pass
+                    if thisSize < smallestSize:
+                        smallestSize = thisSize
+                        smallesVar = var
+            if False:
+                print(f" most constrained {smallesVar} with domainSize: {smallestSize}")
+            return smallesVar
             # ### END CODE HERE ###
 
     def arc_consistency_check(self, var):
@@ -291,8 +346,68 @@ class BacktrackingSearch():
         #   (self.csp.binaryFactors[var1][var2] returns a nested dict of all assignments)
         # Hint: Be careful when removing values from lists - trace through
         #       your solution to make sure it behaves as expected.
-        pass
+
         # ### START CODE HERE ###
+
+        def enforce_arc_consistency(vari, varj, verbosity=0):
+            if verbosity > 1:
+                print(f" enforce  {vari}  WRT {varj}")
+            try:
+                remove_list = []
+                keep_list = []
+                domain_i = self.domains[vari]
+                domain_j = self.domains[varj]
+                if verbosity > 1:
+                    print(f"  domain for {vari} {domain_i}")
+                    print(f"  domain for {varj} {domain_j}")
+                for vali in domain_i:
+                    ok = False
+                    for valj in domain_j:
+                        try:
+                            if self.csp.binaryFactors[vari][varj][vali][valj] != 0:
+                                ok = True
+                                break
+                        except Exception as e1:
+                            import sys
+                            print(sys.exc_info())
+                            raise RuntimeError("checking consistency")
+                    if not ok:
+                        remove_list.append(vali)
+                    else:
+                        keep_list.append(vali)
+                if len(remove_list) > 0:
+                    if verbosity > 1:
+                        print(f"  new domain for {vari}  {keep_list}")
+                return keep_list
+            except Exception as e:
+                import sys
+                print(sys.exc_info())
+                raise RuntimeError(str(e))
+
+        verbosity = 1
+
+        if verbosity > 1:
+            print(f" acr {var}")
+
+        ac3_list = [var]
+        while len(ac3_list) > 0:
+            try:
+                vark = ac3_list.pop()
+                for neighbor in  self.csp.get_neighbor_vars(vark):
+                    copyBefore = copy.deepcopy(self.domains[neighbor])
+                    copyAfter = enforce_arc_consistency(neighbor, vark,
+                                                        verbosity=verbosity)
+                    if copyBefore != copyAfter:
+                        self.domains[neighbor] = copyAfter
+                        if verbosity > 1:
+                            print(f"  put {neighbor} into queue")
+                        ac3_list.append(neighbor)
+            except Exception as e:
+                import sys
+                print(sys.exc_info())
+                raise RuntimeError(str(e))
+        return
+
         # ### END CODE HERE ###
 
 
@@ -319,8 +434,48 @@ def get_sum_variable(csp, name, variables, maxSum):
         [0, maxSum] such that it's consistent with an assignment of |n|
         iff the assignment of |variables| sums to |n|.
     """
-    pass
+
     # ### START CODE HERE ###
+    try:
+
+        result = ('sum', name, 'aggregated')
+
+        csp.add_variable(result, tuple(range(0, maxSum+1)))
+
+        # no input variable, result should be False
+        if len(variables) == 0:
+            csp.add_unary_factor(result, lambda val: 0)
+            return result
+
+        domain = [(i, j) for i in range(0, maxSum+1) for j in range(i, maxSum+1) ]
+
+        for i, X_i in enumerate(variables):
+            B_i = ('sum', name, i)
+            csp.add_variable(B_i, domain)
+
+            def factor(val, b):
+                return b[1] == b[0] + val
+
+            csp.add_binary_factor(X_i, B_i, factor)
+
+            if i == 0:
+                # the first auxiliary variable, its value should never
+                # be 'prev' because there's no X_j before it
+                csp.add_unary_factor(B_i, lambda b: b[0] == 0)
+            else:
+                # consistency between A_{i-1} and A_i
+                def factor(b1, b2):
+                    return b1[1] == b2[0]
+                csp.add_binary_factor(('sum', name, i - 1), B_i, factor)
+
+        # consistency between A_n and result
+        # hacky: reuse A_i because of python's loose scope
+        csp.add_binary_factor(B_i, result, lambda b, res: res == b[1])
+        return result
+    except Exception as e:
+        import sys
+        print(sys.exc_info())
+        raise RuntimeError("get_sum_variable: " + str(e))
     # ### END CODE HERE ###
 
 # importing get_or_variable helper function from util
